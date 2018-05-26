@@ -6,15 +6,9 @@ Cshear::Cshear(Cloth &cloth, int *tri)
 	uv = UV(cloth, tri);
 	w = W(cloth, tri);
 
-
-	p0 = cloth.getWorldVel(tri[0]);
-	p1 = cloth.getWorldVel(tri[1]);
-	p2 = cloth.getWorldVel(tri[2]);
-	v0 = { p0[0], p0[1], p0[2] };
-	v1 = { p1[0], p1[1], p1[2] };
-	v2 = { p2[0], p2[1], p2[2] };
-
-	//c = uv.alpha * ((w.whatu).dot(w.whatv));
+	 v0 = Vector3d(cloth.getWorldVel(tri[0]));
+	 v1 = Vector3d(cloth.getWorldVel(tri[1]));
+	 v2 = Vector3d(cloth.getWorldVel(tri[2]));
 	c = uv.alpha * ((w.wu).dot(w.wv));
 	
 	for (int m = 0; m < 3; ++m) {
@@ -32,14 +26,11 @@ Cshear::Cshear(Cloth &cloth, int *tri)
 	dc_dt += (dc_dxm(2, 0)).dot(v2);
 	
 
-	//Matrix3d::indent
 	for (int m = 0; m < 3; ++m) for (int n = m; n < 3; ++n)
 	{
 		d2c_dxmdxn(m, n) =  uv.alpha * (
 				w.dwu_dxmx[m] * w.dwv_dxmx[n] +
 				w.dwu_dxmx[n] * w.dwv_dxmx[m]);
-		d2c_dxmdxn(n, m) = uv.alpha * (
-			w.dwu_dxmx[m] * w.dwv_dxmx[n] +
-			w.dwu_dxmx[n] * w.dwv_dxmx[m]);
+		d2c_dxmdxn(n, m) = d2c_dxmdxn(m, n);
 	}
 }

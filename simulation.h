@@ -9,31 +9,26 @@
 #include "cloth.h"
 #include "Force.h"
 #include "ForceBend.h"
-#include "dForcex.h"
-#include "dForcev.h"
+
 #include "dFbendx.h"
 #include "dFbendv.h"
-#include "Eforce.h"
 #include "EFbend.h"
-#include "Ctri.h"
+
 
 using namespace Eigen;
-#define LOCK_TOP_ROW true
 
-#define GRAVITY_ENABLED true
-#define FLOOR_ENABLED false
-#define ACCEL_LOCK true
-#define STRETCHLIMIT  0.03
-#define DENSITY 0.01
+#define STRETCHLIMIT  0.05
+#define DENSITY 1
 #define STRETCH_STIFF 5000
-#define DAMP_STIFF  100
+#define DAMP_STIFF  0.2
 #define SHEAR_STIFF 500
-#define BEND_STIFF 0.00001
+#define BEND_STIFF 0.0001
 #define IT 5
-
-#define TIMESTEP 0.02
-
-
+#define TIMESTEP 0.1
+#define TOLERANCE  0.05 //1e-2f //0.1f
+#define NB_INTERNAL_STEPS_INC_DEFAULT 2
+#define MAX_NB_INTERNAL_STEPS_INC  40
+#define INC_CHANGE_FACTOR  1.5f
 
 #define FLOOR_HEIGHT -1
 
@@ -43,20 +38,65 @@ using namespace Eigen;
 typedef Matrix<double, Dynamic, Dynamic> ForceMatrix;
 typedef Matrix<double, 3, 3> dForceMatrix;
 typedef Matrix<double, Dynamic, Dynamic> DForceMatrix;
+typedef Matrix<double, Dynamic, Dynamic> PMatrix;
+
 class Simulation {
-	int h;
-	int trii;
-	int triii;
-	double maxScale;
+
+	
 	double scaleX;
 	double scaleY;
-	
+	double h;
+	int nbSubSteps;
+	int maxSubSteps;
+	int nbInternalStepsInc;
+	int nbInternalSteps;
+	bool stepFailed;
+	bool fullStep;
+	bool running = true;
+	bool dofinal = true;
+	bool bannerStyle = false;
+	bool cuffing = false;
+	bool doFinaleInPre;
+	bool inStep;
+	bool stepSuccessFlag;
+	float stepEnd;
+	double mas;
+	DForceMatrix A;
+	DForceMatrix M;
+	DForceMatrix S;
+	DForceMatrix ri;
+	ForceMatrix V;
+	ForceMatrix b;
+	ForceMatrix LM;
+	DForceMatrix z0;
+	DForceMatrix x;
+	ForceMatrix y;
+	ForceMatrix forces;
+	DForceMatrix dforcesv;
+	DForceMatrix dforcesx;
+	PMatrix P;
+	PMatrix Pinv;
+	VectorXd bhat;
+	VectorXd  r;
+	VectorXd  c;
+	Matrix3d I;
+	double delta0;
+	double deltaNew;
+	Matrix<double, 5, 1> fenergy;  // stretch, shear, bend, gravity, drag.
+	Matrix<double, 5, Dynamic> trienergy;
+	double nbSteps;
+	bool done;
+	int size;
+	double TIME;
+	double framePeriod;
+	int frameRate;
+	double frame;
 
-	void fShearStretch(int);
-	void fShearStretchHelper(int *);
-	void dfShearStretchHelper(int *);
-	void EfShearStretchHelper(int *);
-	void CuCv(int *);
+	void fShearStretch(int,int);
+	void fShearStretchHelper(int *,int);
+
+//	void EfShearStretchHelper(int *, int);
+	void multiply(VectorXd, MatrixXd, VectorXd);
 	
 
 	
@@ -64,42 +104,37 @@ class Simulation {
 	void fBend(int);
 	void bendHelper(int *);
 	void dfbendHelper(int *);
-	void EfbendHelper(int *);
+	
 
 	double *genTrisFromMesh();
 	double *genNorms();
 	double *genTriNorms();
 	void copyPoint(double *, double *);
 
+	void preSubSteps();
+	void postSubStepsFinale();
+	void postSubSteps();
+	void preStepCG();
+	void stepCG();
+	void filterCompInPlace(VectorXd);
+	void filterInPlace(VectorXd);
+	ForceMatrix filter(ForceMatrix);
+	ForceMatrix filterComp(ForceMatrix);
+	void changeStep(int);
+	void setFrameRate();
+
+
 public:
 	Cloth cloth;
+	
 	double *triVerts;
 	double *norms;
-	bool running = true;
-	bool bannerStyle = false;
-	bool cuffing = false;
 	
-	//ForceMatrix forces0;
-	double mas;
-	DForceMatrix a;
-	DForceMatrix M;
-	ForceMatrix V;
-	ForceMatrix b;
-	ForceMatrix LM;
-	DForceMatrix S;
-	DForceMatrix z0;
-	ForceMatrix deltaV;
-	ForceMatrix forces;
-	DForceMatrix dforcesv;
-	DForceMatrix dforcesx;
-	Matrix<double, 5, 1> fenergy;  // stretch, shear, bend, gravity, drag.
-	Matrix<double, 5, Dynamic> trienergy;
-	Matrix<double, 1, Dynamic> CU;
-	Matrix<double, 1, Dynamic> CV;
+	
 	Simulation(int, int);
-
+	bool doneSubSteps;
 	void update();
-
+	
 	int getNumTris() { return 2 * (cloth.xRes - 1) * (cloth.yRes - 1); }
 	int getNumPoints() { return cloth.xRes * cloth.yRes; }
 

@@ -8,14 +8,11 @@ using namespace Eigen;
 
 struct W {
 
-	double *p0;
-	double *p1;
-	double *p2;
-	Vector3d t0;
-	Vector3d t1;
-	Vector3d t2;
 
-public:
+public: 
+	Vector3d x0;
+	Vector3d x1;
+	Vector3d x2;
 	UV uv;
 	Vector3d wu;
 	Vector3d wv;

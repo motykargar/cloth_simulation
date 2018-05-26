@@ -12,5 +12,5 @@ using namespace Eigen;
 typedef Matrix<Vector3d, 2, 3> FMatrix;
 
 
-FMatrix Force(Cloth &, int *, double, double, double, double, double);
+void Force(Cloth &, int *, double, double, double, double, double, int);
 

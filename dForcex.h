@@ -8,9 +8,7 @@
 
 using namespace Eigen;
 
-typedef Matrix<Matrix3d, 3, 3> dFMatrix;
 
-
-dFMatrix dForcex(Cloth &, int *, double, double, double, double, double);
+void dForcex(Cloth &, int *, double, double, double, double, double);
 
 

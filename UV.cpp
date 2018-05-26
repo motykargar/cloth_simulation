@@ -3,12 +3,11 @@
 UV::UV(Cloth &cloth, int *tri){
 
 
-	p0 = cloth.getUvPoint(tri[0]);
-	p1 = cloth.getUvPoint(tri[1]);
-	p2 = cloth.getUvPoint(tri[2]);
-	t0 = { p0[0], p0[1], p0[2] };
-	t1 = { p1[0], p1[1], p1[2] };
-	t2 = { p2[0], p2[1], p2[2] };
+	auto t0 = Vector3d(cloth.getUvPoint(tri[0]));
+	auto t1 = Vector3d(cloth.getUvPoint(tri[1]));
+	auto t2 = Vector3d(cloth.getUvPoint(tri[2]));
+
+
 	
 	du1 = t1[0] - t0[0];
 	dv1 = t1[1] - t0[1];

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string.h>
+#include <iostream>
 
 #include <Eigen/Dense>
 using namespace Eigen;
@@ -8,12 +10,8 @@ using namespace Eigen;
 
 struct UV {
 
-	double *p0;
-	double *p1;
-	double *p2;
-	Vector3d t0;
-	Vector3d t1;
-	Vector3d t2;
+	
+public:
 	double du1;
 	double dv1;
 	double du2;
@@ -23,6 +21,4 @@ struct UV {
 	double alpha;   //David Pritchard
 
 	UV(Cloth &, int *);
-	
-
 };

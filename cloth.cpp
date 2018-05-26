@@ -9,17 +9,25 @@ Cloth::Cloth(int xRes, int yRes, double mass, double w, double h)
 	initUvPoints();
 	initWorldPoints();
 	initVelocities();
-	
+	initForce();
+	initdForcex();
+	initdForcev();
+	initCuCv();
+	initCuCvsave();
+	inittriID();
 	triUvArea = getTriUvArea();
+	initmass();
 }
 
 // initialize uvPoints with uniform grid
 void Cloth::initUvPoints() {
-	uvPoints = new double[2 * xRes * yRes];
+	uvPoints = new double[3 * xRes * yRes];
+	
 	for (int i = 0; i < yRes; i++) {
 		for (int j = 0; j < xRes; j++) {
-			uvPoints[2 * (i*xRes + j)]     = j * w / (xRes-1);
-			uvPoints[2 * (i*xRes + j) + 1] = i * h / (yRes-1);
+			uvPoints[3 * (i*xRes + j)]     = j * w / (xRes-1);
+			uvPoints[3 * (i*xRes + j) + 1] = i * h / (yRes-1);
+			uvPoints[3 * (i*xRes + j) + 2] = 0;
 		}
 	}
 }
@@ -28,22 +36,91 @@ void Cloth::initUvPoints() {
 void Cloth::initWorldPoints() {
 	// init world positions
 	worldPoints = new double[3 * xRes * yRes];
+	worldPointssave = new double[3 * xRes * yRes];
 	for (int i = 0; i < yRes; i++) {
 		for (int j = 0; j < xRes; j++) {
 			double *point = getUvPoint(j, i);
 			setWorldPoint(j, i, point[0] - w / 2, point[1] - h / 2, 0);
 			//setWorldPoint(j, i, point[0] , point[1] , 0);
+			worldPoints[3 * (i*xRes + j)] = (j * w / (xRes - 1)) - w / 2;
+			worldPoints[3 * (i*xRes + j) + 1] = (i * h / (yRes - 1)) - h / 2;
+			worldPoints[3 * (i*xRes + j) + 2] = 0;
+			
+
 		}
+	}
+	for (int j = 0; j < 3 * xRes * yRes; j++) {
+		worldPointssave[j] = worldPoints[j];
 	}
 }
 
 void Cloth::initVelocities() {
 	worldVels = new double[3 * xRes * yRes];
+	lastDeltaV0 = new double[3 * xRes * yRes];
+	worldVelssave = new double[3 * xRes * yRes];
+	lastDeltaV0save = new double[3 * xRes * yRes];
 	for (int i = 0; i < 3 * yRes*xRes; i++) {
 		worldVels[i] = 0;
+		lastDeltaV0[i] = 0;
+		worldVelssave[i] = 0;
+		lastDeltaV0save[i] = 0;
 	}
 }
+void Cloth::initCuCv() {
+	Cu = new double[2 * (xRes - 1) * (yRes - 1)];
+	Cv = new double[2 * (xRes - 1) * (yRes - 1)];
 
+	for (int i = 0; i < 2 * (xRes - 1) * (yRes - 1); i++) {
+		Cu[i] = 0;
+		Cv[i] = 0;
+	
+
+	}
+}
+void Cloth::initCuCvsave() {
+	
+	Cusave = new double[2 * (xRes - 1) * (yRes - 1)];
+	Cvsave = new double[2 * (xRes - 1) * (yRes - 1)];
+	for (int i = 0; i < 2 * (xRes - 1) * (yRes - 1); i++) {
+	
+		Cusave[i] = 0;
+		Cvsave[i] = 0;
+
+	}
+}
+void Cloth::initmass() {
+	  Mass = new double[xRes * yRes];
+	
+	for (int i = 0; i < xRes * yRes; i++) {
+		Mass[i] = DENSITY *triUvArea/3;
+	}
+}
+void Cloth::initForce() {
+	Force = new double[3 * xRes * yRes];
+	Forcesave = new double[3 * xRes * yRes];
+	for (int i = 0; i < 3 * yRes*xRes; i++) {
+		Force[i] = 0;
+		Forcesave[i] = 0;
+	}
+}
+void Cloth::initdForcex() {
+	dforcex = new Matrix3d[ xRes * yRes, xRes * yRes];
+	for (int i = 0; i <  yRes*xRes; i++)for (int j = 0; j <  yRes*xRes; j++) {
+		dforcex[i,j].setZero();
+	}
+}
+void Cloth::initdForcev() {
+	dforcev = new Matrix3d[ xRes * yRes, xRes * yRes];
+	for (int i = 0; i <  yRes*xRes; i++)for (int j = 0; j <  yRes*xRes; j++) {
+		dforcev[i,j].setZero();
+	}
+}
+void Cloth::inittriID() {
+	triID.resize(2 * (xRes - 1) * (yRes - 1));
+	for (int i = 0; i < 2 * (xRes - 1) * (yRes - 1); i++) {
+		triID[i] = i;
+	}
+}
 void Cloth::setWorldPoint(int xCor, int yCor, double xPos, double yPos,
 	double zPos) {
 	double *point = getWorldPoint(xCor, yCor);

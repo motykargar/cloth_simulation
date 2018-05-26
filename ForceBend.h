@@ -9,9 +9,7 @@
 
 using namespace Eigen;
 
-typedef Matrix<Vector3d, 1, 4> FBendMatrix;
 
-
-FBendMatrix ForceBend(Cloth &, int *, double, double);
+void ForceBend(Cloth &, int *, double, double);
 
 

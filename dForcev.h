@@ -8,10 +8,8 @@
 
 using namespace Eigen;
 
-typedef Matrix<Matrix3d, 3, 3> dFMatriv;
 
-
-dFMatriv dForcev(Cloth &, int *, double, double, double, double, double);
+void dForcev(Cloth &, int *, double, double, double, double, double);
 
 
 

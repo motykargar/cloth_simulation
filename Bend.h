@@ -13,7 +13,7 @@ using namespace Eigen;
 typedef Matrix<Vector3d, 1, 4> qMatrix;
 typedef Matrix<double, 1, 4> qeMatrix;
 typedef Matrix<Vector3d, 4, 3> dnMatrix;
-typedef Matrix<Vector3d, 3, 1> d2ntMatrix;
+typedef Matrix<Vector3d, 3, 3> d2ntMatrix;
 typedef Matrix<d2ntMatrix, 4, 4> d2nMatrix;
 typedef Matrix<double, 4, 3> dsincosMatrix;
 typedef Matrix<Vector3d, 4, 1> dcMatrix;
@@ -23,10 +23,7 @@ typedef Matrix<Matrix3d, 4, 4> d2cMatrix;
 
 class Bend {
 
-	double *p0;
-	double *p1;
-	double *p2;
-	double *p3;
+	
 	Vector3d v0;
 	Vector3d v1;
 	Vector3d v2;
@@ -53,8 +50,8 @@ class Bend {
 	d2nMatrix d2nB_dxmdxn;
 	dsincosMatrix dcos_dxm;
 	dsincosMatrix dsin_dxm;
-	d2nMatrix d2cos;
-	d2nMatrix d2sin;
+	d2cMatrix d2cos;
+	d2cMatrix d2sin;
 	
 
 

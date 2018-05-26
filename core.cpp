@@ -12,16 +12,11 @@ int main(int argc, char **argv) {
 
 	init();
 
-	glutDisplayFunc(display);
+	          glutDisplayFunc(display);
 	//glutIdleFunc(idle);
-	glutReshapeFunc(resize);
-	//glutKeyboardFunc(keyboard);
-	//glutSpecialFunc(arrow_keys);
-	//glutMouseFunc(mouse);
-	//glutMotionFunc(mouseMotion);
+	             glutReshapeFunc(resize);
 
-	//glutMouseFunc(mouse);
-	glutMainLoop();
+	           glutMainLoop();
 }
 void init(GLvoid)
 {

@@ -1,20 +1,15 @@
 #include "Cstrech.h"
 
 
-Cstrech::Cstrech(Cloth &cloth, int *tri, double b_u, double b_v)
+Cstrech::Cstrech(Cloth &cloth, int *tri, double b_u, double b_v, int ID)
 	: uv(UV(cloth, tri)), w(W(cloth, tri)) {
 	uv = UV(cloth, tri);
 	w = W(cloth, tri);
-
-
-	p0 = cloth.getWorldVel(tri[0]);
-	p1 = cloth.getWorldVel(tri[1]);
-	p2 = cloth.getWorldVel(tri[2]);
-	v0 = { p0[0], p0[1], p0[2] };
-	v1 = { p1[0], p1[1], p1[2] };
-	v2 = { p2[0], p2[1], p2[2] };
+	double rho = 0.1;
+	 v0 = Vector3d(cloth.getWorldVel(tri[0]));
+	 v1 = Vector3d(cloth.getWorldVel(tri[1]));
+	 v2 = Vector3d(cloth.getWorldVel(tri[2]));
 	
-
 	cu=uv.alpha * (w.wunorm - b_u);
 	cv=uv.alpha * (w.wvnorm - b_v);
 	for (int m = 0; m < 3; ++m)
@@ -43,8 +38,17 @@ Cstrech::Cstrech(Cloth &cloth, int *tri, double b_u, double b_v)
 				* (I - (Matrix3d(w.whatu * w.whatu.transpose())));
 			d2cu_dxmdxn(n, m) = d2cu_dxmdxn(m, n);
 			d2cv_dxmdxn(m, n) = (uv.alpha * w.iwvnorm * w.dwv_dxmx[m] * w.dwv_dxmx[n])
-				* (I - (Matrix3d(w.whatu * w.whatu.transpose())));
+				* (I - (Matrix3d(w.whatv * w.whatv.transpose())));
 			d2cv_dxmdxn(n, m) = d2cv_dxmdxn(m, n);
 		}
+
+	
+	cloth.Cu[ID] = cu/uv.alpha;
+	cloth.Cv[ID] = cv/ uv.alpha;
+	
+	cloth.mass = rho * uv.UvArea / 3;
+//td::cout << "cloth.Cu[ID]" << cloth.Cu[ID] << std::endl;
+//td::cout << "doFinaleInPre4" << std::endl;
+	
 	
 }

@@ -10,14 +10,9 @@ using namespace Eigen;
 typedef Matrix<Vector3d, 3, 1> dcSHMatrix;
 //pedef Matrix<double, 3, 3> d2cMatrix;
 struct Cshear {
-
-	double *p0;
-	double *p1;
-	double *p2;
 	Vector3d v0;
 	Vector3d v1;
 	Vector3d v2;
-
 public:
 	UV uv;
 	W w;

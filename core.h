@@ -8,7 +8,7 @@
 #include "ui.h"
 #include "simulation.h"
 
-Simulation sim(4, 4);
+Simulation sim(15, 15);
 
 UI ui(720, 480, sim);
 

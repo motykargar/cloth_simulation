@@ -12,14 +12,11 @@ Bend::Bend(Cloth &cloth, int *tri) {
 	dsincos();
 	d2sincos();
 	cderiv();
-	p0 = cloth.getWorldVel(tri[0]);
-	p1 = cloth.getWorldVel(tri[1]);
-	p2 = cloth.getWorldVel(tri[2]);
-	p3 = cloth.getWorldVel(tri[3]);
-	v0 = { p0[0], p0[1], p0[2] };
-	v1 = { p1[0], p1[1], p1[2] };
-	v2 = { p2[0], p2[1], p2[2] };
-	v3 = { p3[0], p3[1], p3[2] };
+	v0 = Vector3d(cloth.getWorldVel(tri[0]));
+	v1 = Vector3d(cloth.getWorldVel(tri[0]));
+	v2 = Vector3d(cloth.getWorldVel(tri[0]));
+	v3 = Vector3d(cloth.getWorldVel(tri[0]));
+	
 	dc_dt = 0;
 
 	dc_dt += (dc_dxm(0,0)).dot(v0);
@@ -32,7 +29,7 @@ Bend::Bend(Cloth &cloth, int *tri) {
 void Bend::N(Cloth &cloth, int *tri) {
 
 	na= cloth.triNormal(tri[0], tri[1], tri[2]);
-	nb= cloth.triNormal(tri[2], tri[1], tri[3]);
+	nb= cloth.triNormal(tri[3], tri[1], tri[2]);
 	
 	naim = 1 / na.norm();
 	nbim = 1 / nb.norm();
@@ -124,19 +121,21 @@ void Bend::D2NE() {
 	I(2, 2) += 1;
 
 	for (int m = 0; m < 4; ++m) {
+		for (int n = m; n < 4; ++n) {
+			Matrix3d dqAm_dxn_t= I * D1(0, m)[n] * naim;
+			Matrix3d dqBm_dxn_t= I * D2(0, m)[n] * nbim;
 
-		for (int n = 0; n < 4; ++n) {
-			Matrix3d dqAm_dxn_t = I*D1(0,m)[n] * naim;
-			Matrix3d dqBm_dxn_t = I*D2(0,m)[n] * nbim;
-
-			for (int t = 0; t < 3; ++t) {
+			for (int t = 0; t < 3; ++t) {	
 				Matrix3d sqat = makeSkew(dqAm_dxn_t.col(t));
 				Matrix3d sqbt = makeSkew(dqBm_dxn_t.col(t));
 				for (int s = 0; s < 3; ++s) {
+
+					d2nA_dxmdxn(m, n)(s, t) = sqat.row(s);
+					d2nB_dxmdxn(m, n)(s, t) = sqbt.row(s);
+					d2nA_dxmdxn(n, m)(t, s) = sqat.row(s);
+					d2nB_dxmdxn(n, m)(t, s) = sqbt.row(s);
 					
-					d2nA_dxmdxn(m, n)(s, 0) = Vector3d(sqat.row(s));
-					d2nB_dxmdxn(m, n)(s, 0) = Vector3d(sqbt.row(s));
-					
+				
 				}
 			}
 		}
@@ -171,22 +170,24 @@ void Bend::d2sincos() {
 			for (int s = 0; s < 3; ++s){
 				for (int t = 0; t < 3; ++t) {
 					
-					(d2cos(m, n)(s, 0))[t]=
-					(d2nA_dxmdxn(m, n)(s, 0)).dot(nhatb) +
+					(d2cos(m, n)(t, s))=
+					(d2nA_dxmdxn(m, n)(s, t)).dot(nhatb) +
 						dnhatA_dmx(m, s).dot(dnhatB_dmx(n, t)) +
 						dnhatA_dmx(n, t).dot(dnhatB_dmx(m, s)) +
-						(d2nB_dxmdxn(m, n)(s, 0)).dot(nhata);
+						(d2nB_dxmdxn(m, n)(s, t)).dot(nhata);
 
 
-					(d2sin(m, n)(s, 0))[t] =
-						((d2nA_dxmdxn(m, n)(s, 0)).cross(nhatb) +
+					(d2sin(m, n)(t, s)) =
+						((d2nA_dxmdxn(m, n)(s, t)).cross(nhatb) +
 						dnhatA_dmx(m, s).cross(dnhatB_dmx(n, t)) +
 						dnhatA_dmx(n, t).cross(dnhatB_dmx(m, s)) +
-						nhata.cross((d2nB_dxmdxn(m, n)(s, 0)))).dot(ehat) +
+						nhata.cross((d2nB_dxmdxn(m, n)(s, t)))).dot(ehat) +
 						(dnhatA_dmx(m, s).cross(nhatb) + nhata.cross(dnhatB_dmx(m, s))).dot(dehat_dmx(n, t))
 						+ (dnhatA_dmx(n, t).cross(nhatb) + nhata.cross(dnhatB_dmx(n, t))).dot(dehat_dmx(m, s));
 				}
 			}
+			
+
 		}
 	}
 
@@ -202,8 +203,8 @@ void Bend::cderiv() {
 		for (int n = m; n < 4; ++n) {
 			
 			for (int s = 0; s < 3; ++s) for (int t = 0; t < 3; ++t) {
-				double a =cost * (d2sin(m, n)(t, 0))[s]
-					- sint * (d2cos(m, n)(t, 0))[s];
+				double a =cost * (d2sin(m, n)(t, s))
+					- sint * (d2cos(m, n)(t, s));
 				double b = dcos_dxm(n, t) * dsin_dxm(m, s)
 					- dsin_dxm(n, t) * dcos_dxm(m, s);
 				(d2c_dxmdxn(m, n)(t, s)) = a + b;

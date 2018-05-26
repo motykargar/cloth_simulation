@@ -22,9 +22,9 @@ void UI::render() {
 	gluPerspective(FOV_Y, 1. * width / height, 0.1, 100);
 
 	
-	glTranslatef(0, 0, -15);
+	glTranslatef(0, 0, -5);
 	
-	glRotatef(0, 0, 1, 0);
+	glRotatef(45, 0, 1, 0);
 	glVertexPointer(3, GL_FLOAT, 0, tris);
 	glNormalPointer(GL_FLOAT, 0, norms);
 
