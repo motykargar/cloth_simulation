@@ -9,9 +9,7 @@ Cloth::Cloth(int xRes, int yRes, double mass, double w, double h)
 	initUvPoints();
 	initWorldPoints();
 	initVelocities();
-	initForce();
-	initdForcex();
-	initdForcev();
+	
 	initCuCv();
 	initCuCvsave();
 	inittriID();
@@ -93,26 +91,6 @@ void Cloth::initmass() {
 	
 	for (int i = 0; i < xRes * yRes; i++) {
 		Mass[i] = DENSITY *triUvArea/3;
-	}
-}
-void Cloth::initForce() {
-	Force = new double[3 * xRes * yRes];
-	Forcesave = new double[3 * xRes * yRes];
-	for (int i = 0; i < 3 * yRes*xRes; i++) {
-		Force[i] = 0;
-		Forcesave[i] = 0;
-	}
-}
-void Cloth::initdForcex() {
-	dforcex = new Matrix3d[ xRes * yRes, xRes * yRes];
-	for (int i = 0; i <  yRes*xRes; i++)for (int j = 0; j <  yRes*xRes; j++) {
-		dforcex[i,j].setZero();
-	}
-}
-void Cloth::initdForcev() {
-	dforcev = new Matrix3d[ xRes * yRes, xRes * yRes];
-	for (int i = 0; i <  yRes*xRes; i++)for (int j = 0; j <  yRes*xRes; j++) {
-		dforcev[i,j].setZero();
 	}
 }
 void Cloth::inittriID() {

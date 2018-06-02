@@ -83,17 +83,13 @@ void Bend::Qs(Cloth &cloth, int *tri){
 }
 
 void Bend::NEderiv() {
-	Matrix3d I;
-	I.setZero();
-	I(0, 0) += 1;
-	I(1, 1) += 1;
-	I(2, 2) += 1;
+	
 
 	for (int m = 0; m < 4; ++m) {
 		for (int s = 0; s < 3; ++s) {
 			dnhatA_dmx(m, s) = (makeSkew(qa(0,m)).row(s))*naim;
 			 dnhatB_dmx(m,s)= (makeSkew(qb(0, m)).row(s))*nbim;
-			 dehat_dmx(m, s) = (I).col(s) *qe[m] * eim;
+			 dehat_dmx(m, s) = (MatrixXd::Identity(3, 3)).col(s) *qe[m] * eim;
 		}
 	}
 

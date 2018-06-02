@@ -9,8 +9,7 @@ struct Cloth {
 	double *uvPoints;
 	double *worldPoints;
 	double *worldPointssave;
-	double *Force;
-	double *Forcesave;
+
 	double *worldVels;
 	double *lastDeltaV0;
 	double *worldVelssave;
@@ -24,9 +23,8 @@ struct Cloth {
 	double *Mass;
 	double mass;
 	double triUvArea;
-	Matrix3d *dforcex;
-	Matrix3d *dforcev;
-
+	
+	
 	
 	Cloth(int, int, double, double, double);
 	Cloth(int xRes, int yRes) : Cloth(xRes, yRes, 2.5,1, 1) {}
@@ -34,9 +32,7 @@ struct Cloth {
 	void initUvPoints();
 	void initWorldPoints();
 	void initVelocities();
-	void initForce();
-	void initdForcex();
-	void initdForcev();
+	
 	void initCuCv();
 	void initCuCvsave();
 	void inittriID();
@@ -50,12 +46,7 @@ struct Cloth {
 	double *getWorldVel(int x, int y){return worldVels + 3 * (y*xRes + x);}
 	double *getlastDeltaV0(int i) { return lastDeltaV0 + 3 * i; }
 	double *getlastDeltaV0(int x, int y) { return lastDeltaV0 + 3 * (y*xRes + x); }
-	double *getForce(int i) { return Force + 3 * i; }
-	double *getForce(int x, int y) { return Force + 3 * (y*xRes + x); }
-	Matrix3d *getdForcex(int i) { return dforcex + i; }
-	Matrix3d *getdForcex(int x, int y) { return dforcex +  (y*xRes + x); }
-	Matrix3d *getdForcev(int i) { return dforcev +  i; }
-	Matrix3d *getdForcev(int x, int y) { return dforcev +  (y*xRes + x); }
+	
 
 
 	void setWorldPoint(int, int, double, double, double);

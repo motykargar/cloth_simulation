@@ -4,14 +4,14 @@ using namespace std;
 Simulation::Simulation(int clothXRes, int clothYRes)
 	: cloth(Cloth(clothXRes, clothYRes)) {
 	cloth = Cloth(cloth.xRes, cloth.yRes);
+
 	frameRate =  25;
 	frame = 0;
 	size = 0;
 	////std::cout << getNumTris() << std::endl;
 	scaleX = 1;
 	scaleY = 1;
-	
-
+	forcesave.resize(3 * getNumPoints(), 1);
 	forces.resize(3 * getNumPoints(), 1);
 	dforcesx.resize(3 * getNumPoints(), 3 * getNumPoints());
 	dforcesv.resize(3 * getNumPoints(), 3 * getNumPoints());
@@ -34,8 +34,8 @@ Simulation::Simulation(int clothXRes, int clothYRes)
 	fenergy.setZero();
 	trienergy.setZero();
 	
-	
-    forces.setZero();
+	forcesave.setZero();
+   forces.setZero();
     dforcesx.setZero();
     dforcesv.setZero();
     M.setZero();
@@ -44,10 +44,7 @@ Simulation::Simulation(int clothXRes, int clothYRes)
     A.setZero();
     b.setZero();
 	
-	I.setZero();
-	I(0, 0) += 1;
-	I(1, 1) += 1;
-	I(2, 2) += 1;
+	
    // regenerate triangles from the mesh
    triVerts = genTrisFromMesh();
    norms = genTriNorms();
@@ -73,11 +70,12 @@ Simulation::Simulation(int clothXRes, int clothYRes)
 		}
 	}
 
-	for (int pt = 0; pt < (cloth.xRes * cloth.yRes); pt++) {
+	for (int pt = 0; pt < (cloth.xRes * cloth.yRes)-2; pt++) {
 		for (int m = 0; m < 3; m++) {	
 			S((pt * 3) + m, m) = 1;
 		}
 	}
+	
 ///	/////removeAllConstraints
 
 	maxSubSteps = 1000; //
@@ -87,7 +85,7 @@ Simulation::Simulation(int clothXRes, int clothYRes)
 	setFrameRate();
 	changeStep(0);
 	preSubSteps();
-
+	
 }
 
 void Simulation::update() {
@@ -187,11 +185,62 @@ void Simulation::update() {
 	
 	inStep = false;
 	++ frame;
+	/////
 	
 	
+	std::ostringstream convert;
+	convert << frame;
+	fstream output_file(convert.str().c_str(), ios::out);
+	int a = 0, b = 0;
+
+		for (b = 0; b<cloth.xRes * cloth.yRes*3; b++)
+		{
+			
+			output_file <<  cloth.worldPoints[b]  << endl;
+		}
+		
+	/////
 }
 
+void Simulation::update2() {
+	// if simulation is paused, don't update
+
+
+
+
+	if (frame>195) running = false;
+	if (!running) return;
+	std::ostringstream convert;
+	convert << frame;
+	ifstream input_file(convert.str().c_str(), ios::in);
+	int a = 0, b = 0;
+
+	for (b = 0; b<cloth.xRes * cloth.yRes * 3; b++)
+	{
+
+		input_file >> cloth.worldPoints[b] ;
+	}
+	
+	if (triVerts) delete triVerts;
+	if (norms) delete norms;
+	triVerts = genTrisFromMesh();
+	norms = genTriNorms();
+
+	
+	++frame;
+	/////
+
+
+	
+
+	/////
+}
+
+
+
 void Simulation::preSubSteps() {
+	//dforcesx.setZero();
+	//dforcesv.setZero();
 	if (doFinaleInPre) {
 		
 		postSubStepsFinale();
@@ -210,27 +259,10 @@ void Simulation::preSubSteps() {
 
 	
 	for (int pt = 0; pt < (cloth.xRes * cloth.yRes); pt++) {	
-		cloth.Force[3*pt + 1] -= M((pt * 3) + 1, (pt * 3) + 1)*9.8;
+		forces(3*pt + 1) -= M((pt * 3) + 1, (pt * 3) + 1)*9.8;
 		
 	}
-	for (int pt = 0; pt < 15; pt++) {
-		cloth.Force[3 * pt + 2] += 1;
-	}
-
-
-
-	for (int i = 0; i < cloth.xRes * cloth.yRes; i++) {
-		forces((i * 3) + 0) = cloth.Force[(i * 3) + 0];
-		forces((i * 3) + 1) = cloth.Force[(i * 3) + 1];
-		forces((i * 3) + 2) = cloth.Force[(i * 3) + 2];
-	}
-
-	for (int pt = 0; pt < cloth.xRes * cloth.yRes; pt++) for (int ptt = 0; ptt < cloth.xRes * cloth.yRes; ptt++) {
-		for (int m = 0; m < 3; m++) for (int n = 0; n < 3; n++) {
-			dforcesv((pt * 3) + m, (ptt * 3) + n) = cloth.dforcev[pt, ptt](m, n);
-			dforcesx((pt * 3) + m, (ptt * 3) + n) = cloth.dforcex[pt, ptt](m, n);
-		}
-	}
+	
 
 
 	for (int i = 0; i < cloth.xRes * cloth.yRes; i++) {
@@ -256,15 +288,8 @@ void Simulation::preSubSteps() {
 }
 void Simulation::postSubStepsFinale() {
 
-	for (int i = 0; i < 3*cloth.xRes * cloth.yRes; i++) {
-		cloth.Force[i]=0;
-	}
-	for (int i = 0; i < cloth.xRes * cloth.yRes; i++)for (int j = i; j < cloth.xRes * cloth.yRes; j++) {
-		cloth.dforcev[i, j].setZero();
-		cloth.dforcex[i, j].setZero();
-		cloth.dforcev[j, i].setZero();
-		cloth.dforcex[j, i].setZero();
-	}
+	
+	
 	forces.setZero();
 	dforcesx.setZero();
 	dforcesv.setZero();
@@ -302,7 +327,7 @@ void Simulation::postSubSteps() {
 		cloth.worldVelssave[i] = cloth.worldVels[i];
 		cloth.lastDeltaV0save[i] = cloth.lastDeltaV0[i];
 		cloth.worldPointssave[i] = cloth.worldPoints[i];
-		cloth.Forcesave[i] = cloth.Force[i];
+		forcesave(i) = forces(i);
 	}
 	for (int i = 0; i < 2 * (cloth.xRes - 1) * (cloth.yRes - 1); i++) {
 		cloth.Cusave[i] = cloth.Cu[i];
@@ -332,7 +357,7 @@ void Simulation::postSubSteps() {
 				 cloth.worldVels[i] = cloth.worldVelssave[i];
 				 cloth.lastDeltaV0[i] = cloth.lastDeltaV0save[i];
 				 cloth.worldPoints[i] = cloth.worldPointssave[i];
-				 cloth.Force[i] = cloth.Forcesave[i];
+				 forces(i) = forcesave(i);
 			 }
 			 for (int i = 0; i < 2 * (cloth.xRes - 1) * (cloth.yRes - 1); i++) {
 				 cloth.Cu[i] = cloth.Cusave[i];
@@ -356,7 +381,67 @@ void Simulation::fShearStretch(int offset, int ID) {
 }
 
 void Simulation::fShearStretchHelper(int *triPts, int id) {
-	 Force(cloth, triPts, scaleX, scaleY, STRETCH_STIFF, DAMP_STIFF, SHEAR_STIFF, id);
+	
+	Cstrech cstrech(cloth, triPts, scaleX, scaleY, id);
+	Cshear cshear(cloth, triPts);
+
+	// Fstretch
+	//cloth.Force[tri[0] * 3 + 0] += 1;
+	for (int mm = 0; mm < 3; mm++) {
+		Vector3d forcest = (-STRETCH_STIFF * (cstrech.dcu_dxm(mm, 0) *cstrech.cu
+			+ cstrech.dcv_dxm(mm, 0) * cstrech.cv));
+		Vector3d forcesh = (-SHEAR_STIFF * cshear.dc_dxm(mm, 0)* cshear.c);
+		Vector3d dampst = (-DAMP_STIFF * (cstrech.dcu_dxm(mm, 0) *cstrech.dcu_dt
+			+ cstrech.dcv_dxm(mm, 0) * cstrech.dcv_dt));
+		Vector3d dampsh = (-DAMP_STIFF * cshear.dc_dxm(mm, 0) * cshear.dc_dt);
+		for (int nn = 0; nn < 3; nn++) {
+
+			forces((3 * triPts[mm]) + nn) += forcest[nn];
+			forces((3 * triPts[mm]) + nn) += dampst[nn];
+			forces((3 * triPts[mm]) + nn) += forcesh[nn];
+			forces((3 * triPts[mm]) + nn) += dampsh[nn];
+		}
+	}
+
+	for (int m = 0; m < 3; ++m) for (int n = 0; n < 3; ++n) {
+
+		// dFstetch
+		Matrix3d df= -DAMP_STIFF * (
+			(cstrech.dcu_dxm(m, 0)* cstrech.dcu_dxm(n, 0).transpose())
+			+ (cstrech.dcv_dxm(m, 0)* cstrech.dcv_dxm(n, 0).transpose()));
+		df+= -DAMP_STIFF *
+			(cshear.dc_dxm(m, 0)* cshear.dc_dxm(n, 0).transpose());
+
+		for (int mm = 0; mm < 3; ++mm) for (int nn = 0; nn < 3; ++nn) {
+
+			dforcesv(3 * triPts[n] + nn, 3 * triPts[m] + mm) += df(nn, mm);
+		}
+
+
+		df.setZero();
+		 df += -STRETCH_STIFF * (
+			(cstrech.dcu_dxm(m, 0)* (cstrech.dcu_dxm(n, 0).transpose()))
+			+ (cstrech.dcv_dxm(m, 0)* cstrech.dcv_dxm(n, 0).transpose())
+			+ cstrech.d2cu_dxmdxn(m, n) * cstrech.cu
+			+ cstrech.d2cv_dxmdxn(m, n) * cstrech.cv);
+		df += -DAMP_STIFF * (
+			cstrech.d2cu_dxmdxn(m, n) * cstrech.dcu_dt
+			+ cstrech.d2cv_dxmdxn(m, n) * cstrech.dcv_dt);
+		// dFshear
+		df += -SHEAR_STIFF * (
+			(cshear.dc_dxm(m, 0)* cshear.dc_dxm(n, 0).transpose())
+			+ cshear.d2c_dxmdxn(m, n) * cshear.c*(MatrixXd::Identity(3, 3)));
+		df += (MatrixXd::Identity(3, 3)) * (-DAMP_STIFF * (
+			cshear.d2c_dxmdxn(m, n) * cshear.dc_dt));
+
+
+		for (int mm = 0; mm < 3; ++mm) for (int nn = 0; nn < 3; ++nn) {
+
+			dforcesx(3 * triPts[n] + nn, 3 * triPts[m] + mm) += df(nn, mm);
+		}
+
+	}
+
 }
 
 
@@ -393,20 +478,20 @@ void Simulation::fBend(int offset) {
 	};
 
 	bendHelper(diagPts);
-	dfbendHelper(diagPts);
+	
 
-	//if (xOff < cloth.xRes - 2)
-	//{
-	//	bendHelper(rightPts);
-	//	dfbendHelper(rightPts);
-	//}
+	if (xOff < cloth.xRes - 2)
+	{
+		bendHelper(rightPts);
+		
+	}
 		
 
-	////if (yOff < cloth.yRes - 2)
-	//{
-	//	bendHelper(topPts);
-	//	dfbendHelper(topPts);
-	//}
+	if (yOff < cloth.yRes - 2)
+	{
+		bendHelper(topPts);
+		
+	}
 		
 
 
@@ -416,21 +501,44 @@ void Simulation::fBend(int offset) {
 }
 
 void Simulation::bendHelper(int *triPts) {
-	
-	ForceBend(cloth, triPts, DAMP_STIFF, BEND_STIFF);
 
-	//F Bend
+		Bend bend(cloth, triPts);
+
+		for (int m = 0; m < 4; m++) {
+			Vector3d forcebend = -BEND_STIFF * bend.dc_dxm(m, 0) * bend.c;
+			Vector3d dampbend = -DAMP_STIFF * bend.dc_dxm(m, 0) * bend.dc_dt;
+
+			for (int nn = 0; nn < 3; nn++) {
+
+				forces((triPts[m] * 3) + nn) += forcebend[nn];
+				forces((triPts[m] * 3) + nn) += dampbend[nn];
+
+			}
+
+		}
+		for (int m = 0; m < 4; ++m) for (int n = 0; n < 4; ++n) {
+			
+			Matrix3d df = -DAMP_STIFF * (bend.dc_dxm(m, 0)* bend.dc_dxm(n, 0).transpose());
+
+			for (int mm = 0; mm < 3; ++mm) for (int nn = 0; nn < 3; ++nn) {
+
+				dforcesv(3 * triPts[n] + nn, 3 * triPts[m] + mm) += df(nn, mm);
+			}
+			df.setZero();
+			df += -BEND_STIFF * ((bend.dc_dxm(m, 0)* bend.dc_dxm(n, 0).transpose())
+				+ bend.d2c_dxmdxn(m, n) * bend.c);
+			df += -DAMP_STIFF * bend.d2c_dxmdxn(m, n) * bend.dc_dt;
+
+			for (int mm = 0; mm < 3; ++mm) for (int nn = 0; nn < 3; ++nn) {
+
+				dforcesx(3 * triPts[n] + nn, 3 * triPts[m] + mm) += df(nn, mm);
+			}
+			
+		}
+
+
 
 }
-
-void Simulation::dfbendHelper(int *triPts) {
-
-	dFbendx(cloth, triPts,  DAMP_STIFF, BEND_STIFF);
-	dFbendv(cloth, triPts,  DAMP_STIFF, BEND_STIFF);
-
-	
-}
-
 
 
 
@@ -532,8 +640,8 @@ void Simulation::preStepCG() {
 	Pinv.setZero();
 	for (int i = 0; i < 3*getNumPoints(); ++i)
 			if (!(A(i , i ) == 0)) {
-				P(i , i ) = A(i , i );
-				Pinv(i , i ) = 1 / A(i , i );
+				P.insert(i , i ) = A(i , i );
+				Pinv.insert(i , i ) = 1 / A(i , i );
 		}
 	x = z0;
 	filterCompInPlace(x); /////

@@ -7,7 +7,7 @@ using namespace Eigen;
 
 #include "cloth.h"
 #include "UV.h"
-#include "W.h"
+
 typedef Matrix<Vector3d, 3, 1> dcSTMatrix;
 typedef Matrix<Matrix3d, 3, 3> d2cSTMatrix;
 struct Cstrech {
@@ -17,7 +17,7 @@ struct Cstrech {
 	Vector3d v2;
 public:
 	UV uv;
-	W w;
+	
 	double cu;
 	double cv;
 	dcSTMatrix dcu_dxm;

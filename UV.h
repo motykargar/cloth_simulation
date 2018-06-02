@@ -19,6 +19,20 @@ public:
 	double det;
 	double UvArea;
 	double alpha;   //David Pritchard
+	Vector3d x0;
+	Vector3d x1;
+	Vector3d x2;
+	
+	Vector3d wu;
+	Vector3d wv;
+	double wunorm;
+	double wvnorm;
+	double iwunorm;
+	double iwvnorm;
+	Vector3d whatu;
+	Vector3d whatv;
+	Vector3d dwu_dxmx;
+	Vector3d dwv_dxmx;
 
 	UV(Cloth &, int *);
 };

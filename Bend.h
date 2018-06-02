@@ -6,7 +6,7 @@ using namespace Eigen;
 
 #include "cloth.h"
 #include "UV.h"
-#include "W.h"
+
 
 
 //pedef Matrix<Matrix3d, 3, 3> d2cMatrix;

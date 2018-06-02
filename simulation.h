@@ -5,19 +5,23 @@
 #include <string.h>
 #include <iostream>
 #include <random>
+#include <fstream>
+#include <cstring>
+#include <sstream>
+
 
 #include "cloth.h"
-#include "Force.h"
-#include "ForceBend.h"
+#include "UV.h"
+#include "W.h"
+#include "Cshear.h"
+#include "Cstrech.h"
+#include "Bend.h"
 
-#include "dFbendx.h"
-#include "dFbendv.h"
-#include "EFbend.h"
 
 
 using namespace Eigen;
 
-#define STRETCHLIMIT  0.05
+#define STRETCHLIMIT  0.1
 #define DENSITY 1
 #define STRETCH_STIFF 5000
 #define DAMP_STIFF  0.2
@@ -39,7 +43,6 @@ typedef Matrix<double, Dynamic, Dynamic> ForceMatrix;
 typedef Matrix<double, 3, 3> dForceMatrix;
 typedef Matrix<double, Dynamic, Dynamic> DForceMatrix;
 typedef Matrix<double, Dynamic, Dynamic> PMatrix;
-
 class Simulation {
 
 	
@@ -61,6 +64,7 @@ class Simulation {
 	bool stepSuccessFlag;
 	float stepEnd;
 	double mas;
+//	SparseMatrix<double> A;
 	DForceMatrix A;
 	DForceMatrix M;
 	DForceMatrix S;
@@ -71,11 +75,12 @@ class Simulation {
 	DForceMatrix z0;
 	DForceMatrix x;
 	ForceMatrix y;
+	ForceMatrix forcesave;
 	ForceMatrix forces;
 	DForceMatrix dforcesv;
 	DForceMatrix dforcesx;
-	PMatrix P;
-	PMatrix Pinv;
+	SparseMatrix<double> P;
+	SparseMatrix<double> Pinv;
 	VectorXd bhat;
 	VectorXd  r;
 	VectorXd  c;
@@ -103,7 +108,7 @@ class Simulation {
 
 	void fBend(int);
 	void bendHelper(int *);
-	void dfbendHelper(int *);
+	
 	
 
 	double *genTrisFromMesh();
@@ -134,7 +139,7 @@ public:
 	Simulation(int, int);
 	bool doneSubSteps;
 	void update();
-	
+	void update2();
 	int getNumTris() { return 2 * (cloth.xRes - 1) * (cloth.yRes - 1); }
 	int getNumPoints() { return cloth.xRes * cloth.yRes; }
 
